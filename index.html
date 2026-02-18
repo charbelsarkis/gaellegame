@@ -134,7 +134,7 @@ function Game() {
 
   const raf = useRef(null), tmr = useRef(null), fr = useRef(null);
   const st = useRef({
-    y:GY,vy:0,og:true,jc:0,obs:[],stars:[],f:0,sc:0,bi:0,wt:0,
+    y:GY,vy:0,og:true,jc:0,obs:[],stars:[],f:0,sc:0,bi:0,wt:0,nob:60+Math.floor(Math.random()*100),
     cl:Array.from({length:5},(_,i)=>({x:i*160+Math.random()*80,y:30+Math.random()*80,sz:30+Math.random()*30,sp:0.3+Math.random()*0.5})),
     hl:[{x:0,w:200,h:80,c:"#90EE90"},{x:180,w:150,h:60,c:"#98FB98"},{x:350,w:250,h:90,c:"#7CFC00"},{x:550,w:180,h:70,c:"#90EE90"}],
   });
@@ -170,7 +170,7 @@ function Game() {
   },[hs]);
 
   const startG = ()=>{
-    const s=st.current; s.y=GY;s.vy=0;s.og=true;s.jc=0;s.obs=[];s.stars=[];s.f=0;s.sc=0;s.wt=0;
+    const s=st.current; s.y=GY;s.vy=0;s.og=true;s.jc=0;s.obs=[];s.stars=[];s.f=0;s.sc=0;s.wt=0;s.nob=60+Math.floor(Math.random()*100);
     sSco(0);sTl(DUR);sB([]);sHb([]);sW(false);sWf(0);sNr(false);sSc("play");
   };
 
@@ -188,7 +188,7 @@ function Game() {
       if(s.wt>0){s.wt--;if(s.wt<=0)sW(false);}
       s.vy+=G; s.y+=s.vy;
       if(s.y>=GY){s.y=GY;s.vy=0;s.og=true;s.jc=0;}
-      if(s.f%SI===0) s.obs.push({x:W+20,e:OBS[Math.floor(Math.random()*OBS.length)],id:Math.random(),bo:Math.random()*Math.PI*2});
+      if(s.f>=s.nob){s.nob=s.f+60+Math.floor(Math.random()*100);s.obs.push({x:W+20,e:OBS[Math.floor(Math.random()*OBS.length)],id:Math.random(),bo:Math.random()*Math.PI*2});}
       if(s.f%SSP===0) s.stars.push({x:W+20,y:GY-50-Math.random()*100,e:COL[Math.floor(Math.random()*COL.length)],id:Math.random()});
       s.obs=s.obs.map(o=>({...o,x:o.x-SS})).filter(o=>o.x>-60);
       s.stars=s.stars.map(o=>({...o,x:o.x-SS})).filter(o=>o.x>-50);
