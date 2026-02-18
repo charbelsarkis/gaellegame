@@ -49,12 +49,14 @@ const SFX = (()=>{
   let ctx, mId;
   const init = ()=>{ if(!ctx) ctx=new (window.AudioContext||window.webkitAudioContext)(); if(ctx.state==='suspended') ctx.resume(); return ctx; };
   const tone = (freq,type,dur,vol=0.3,slide=0)=>{
-    const c=init(),o=c.createOscillator(),g=c.createGain();
-    o.type=type; o.frequency.setValueAtTime(freq,c.currentTime);
-    if(slide) o.frequency.linearRampToValueAtTime(freq+slide,c.currentTime+dur);
-    g.gain.setValueAtTime(vol,c.currentTime);
-    g.gain.linearRampToValueAtTime(0,c.currentTime+dur);
-    o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime+dur);
+    try{
+      const c=init(),o=c.createOscillator(),g=c.createGain();
+      o.type=type; o.frequency.setValueAtTime(freq,c.currentTime);
+      if(slide) o.frequency.linearRampToValueAtTime(freq+slide,c.currentTime+dur);
+      g.gain.setValueAtTime(vol,c.currentTime);
+      g.gain.linearRampToValueAtTime(0,c.currentTime+dur);
+      o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime+dur);
+    }catch(e){}
   };
   const melody=[523,659,784,880,784,659,523,587,659,784,880,1047,880,784,659,523];
   return {
@@ -62,19 +64,21 @@ const SFX = (()=>{
     hit:()=>{tone(200,'square',0.25,0.12,-100);setTimeout(()=>tone(150,'sawtooth',0.15,0.08),100);},
     jump:()=>{tone(440,'sine',0.1,0.1,350);},
     startMusic:()=>{
-      if(mId) return; const c=init(); let i=0;
+      if(mId) return; let i=0;
       const step=()=>{
-        const n=melody[i%melody.length];
-        const o=c.createOscillator(),g=c.createGain();
-        o.type='triangle'; o.frequency.value=n*0.5;
-        g.gain.setValueAtTime(0.05,c.currentTime);
-        g.gain.linearRampToValueAtTime(0,c.currentTime+0.26);
-        o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime+0.26);
-        const o2=c.createOscillator(),g2=c.createGain();
-        o2.type='sine'; o2.frequency.value=n;
-        g2.gain.setValueAtTime(0.03,c.currentTime);
-        g2.gain.linearRampToValueAtTime(0,c.currentTime+0.26);
-        o2.connect(g2); g2.connect(c.destination); o2.start(); o2.stop(c.currentTime+0.26);
+        try{
+          const c=init(),n=melody[i%melody.length];
+          const o=c.createOscillator(),g=c.createGain();
+          o.type='triangle'; o.frequency.value=n*0.5;
+          g.gain.setValueAtTime(0.15,c.currentTime);
+          g.gain.linearRampToValueAtTime(0,c.currentTime+0.26);
+          o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime+0.26);
+          const o2=c.createOscillator(),g2=c.createGain();
+          o2.type='sine'; o2.frequency.value=n;
+          g2.gain.setValueAtTime(0.08,c.currentTime);
+          g2.gain.linearRampToValueAtTime(0,c.currentTime+0.26);
+          o2.connect(g2); g2.connect(c.destination); o2.start(); o2.stop(c.currentTime+0.26);
+        }catch(e){}
         i++; mId=setTimeout(step,280);
       };
       step();
@@ -307,7 +311,7 @@ function Game() {
       {Array.from({length:20},(_,i)=><span key={i} style={{position:"absolute",top:-8,transform:`translate3d(${((i*73+s.f*SS*0.5)%(W+40))-20}px,0,0)`,fontSize:14,opacity:0.6,willChange:"transform"}}>🌿</span>)}
     </div>
 
-    {s.obs.map(o=>{const bob=Math.sin(s.f*0.08+o.bo)*6;return <div key={o.id} style={{position:"absolute",transform:`translate3d(${o.x}px,${GY+15+80+bob}px,0) scaleX(${s.f%60<30?1:-1})`,fontSize:42,filter:"drop-shadow(0 2px 4px rgba(0,0,0,0.3))",transition:"transform 0.3s",willChange:"transform"}}>{o.e}</div>;})}
+    {s.obs.map(o=>{const bob=Math.sin(s.f*0.08+o.bo)*6;return <div key={o.id} style={{position:"absolute",transform:`translate3d(${o.x}px,${GY+15+80+bob}px,0)`,fontSize:42,filter:"drop-shadow(0 2px 4px rgba(0,0,0,0.3))",willChange:"transform"}}><span style={{display:"inline-block",transform:`scaleX(${s.f%60<30?1:-1})`,transition:"transform 0.3s"}}>{o.e}</span></div>;})}
     {s.stars.map(o=><div key={o.id} style={{position:"absolute",transform:`translate3d(${o.x}px,${o.y+80}px,0) rotate(${Math.sin(s.f*0.1)*15}deg) scale(${1+Math.sin(s.f*0.15)*0.15})`,fontSize:28,willChange:"transform"}}>{o.e}</div>)}
 
     <Char y={s.y} frame={s.f} onGround={s.og} wobble={wob} wobbleFrame={wf} photo={photo} />

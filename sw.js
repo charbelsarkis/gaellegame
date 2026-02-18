@@ -1,4 +1,4 @@
-const CACHE = 'gaelle-v1';
+const CACHE = 'gaelle-v2';
 const URLS = ['./index.html', './manifest.json'];
 
 self.addEventListener('install', e => {
