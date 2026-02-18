@@ -45,6 +45,44 @@ const store = {
   set: (k,v) => { try { localStorage.setItem(k,v); } catch(e) {} },
 };
 
+const SFX = (()=>{
+  let ctx, mId;
+  const init = ()=>{ if(!ctx) ctx=new (window.AudioContext||window.webkitAudioContext)(); if(ctx.state==='suspended') ctx.resume(); return ctx; };
+  const tone = (freq,type,dur,vol=0.3,slide=0)=>{
+    const c=init(),o=c.createOscillator(),g=c.createGain();
+    o.type=type; o.frequency.setValueAtTime(freq,c.currentTime);
+    if(slide) o.frequency.linearRampToValueAtTime(freq+slide,c.currentTime+dur);
+    g.gain.setValueAtTime(vol,c.currentTime);
+    g.gain.linearRampToValueAtTime(0,c.currentTime+dur);
+    o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime+dur);
+  };
+  const melody=[523,659,784,880,784,659,523,587,659,784,880,1047,880,784,659,523];
+  return {
+    collect:()=>{tone(880,'sine',0.1,0.18);setTimeout(()=>tone(1175,'sine',0.1,0.18),60);setTimeout(()=>tone(1397,'sine',0.15,0.12),120);},
+    hit:()=>{tone(200,'square',0.25,0.12,-100);setTimeout(()=>tone(150,'sawtooth',0.15,0.08),100);},
+    jump:()=>{tone(440,'sine',0.1,0.1,350);},
+    startMusic:()=>{
+      if(mId) return; const c=init(); let i=0;
+      const step=()=>{
+        const n=melody[i%melody.length];
+        const o=c.createOscillator(),g=c.createGain();
+        o.type='triangle'; o.frequency.value=n*0.5;
+        g.gain.setValueAtTime(0.05,c.currentTime);
+        g.gain.linearRampToValueAtTime(0,c.currentTime+0.26);
+        o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime+0.26);
+        const o2=c.createOscillator(),g2=c.createGain();
+        o2.type='sine'; o2.frequency.value=n;
+        g2.gain.setValueAtTime(0.03,c.currentTime);
+        g2.gain.linearRampToValueAtTime(0,c.currentTime+0.26);
+        o2.connect(g2); g2.connect(c.destination); o2.start(); o2.stop(c.currentTime+0.26);
+        i++; mId=setTimeout(step,280);
+      };
+      step();
+    },
+    stopMusic:()=>{if(mId){clearTimeout(mId);mId=null;}}
+  };
+})();
+
 function Burst({x,y}) {
   const [ps] = useState(()=>Array.from({length:8},(_,i)=>({id:i,e:BE[Math.floor(Math.random()*BE.length)],a:(i/8)*Math.PI*2,s:2+Math.random()*3})));
   const [f,sF] = useState(0);
@@ -157,13 +195,14 @@ function Game() {
   const jump = useCallback(()=>{
     if(scr!=="play") return;
     const s = st.current, near = s.y >= GY - 5;
-    if(s.og||near) { s.y=Math.min(s.y,GY); s.vy=JF; s.og=false; s.jc=1; }
-    else if(s.jc<MJ) { s.vy=FF; s.jc++; }
+    if(s.og||near) { s.y=Math.min(s.y,GY); s.vy=JF; s.og=false; s.jc=1; SFX.jump(); }
+    else if(s.jc<MJ) { s.vy=FF; s.jc++; SFX.jump(); }
   },[scr]);
 
   const endG = useCallback((fs)=>{
     if(raf.current) cancelAnimationFrame(raf.current);
     if(tmr.current) clearInterval(tmr.current);
+    SFX.stopMusic();
     sFm(FM[Math.floor(Math.random()*FM.length)]);
     if(fs>hs) { sHs(fs); sNr(true); saveHs(fs); } else sNr(false);
     sSc("gameover");
@@ -171,7 +210,7 @@ function Game() {
 
   const startG = ()=>{
     const s=st.current; s.y=GY;s.vy=0;s.og=true;s.jc=0;s.obs=[];s.stars=[];s.f=0;s.sc=0;s.wt=0;s.nob=60+Math.floor(Math.random()*100);
-    sSco(0);sTl(DUR);sB([]);sHb([]);sW(false);sWf(0);sNr(false);sSc("play");
+    sSco(0);sTl(DUR);sB([]);sHb([]);sW(false);sWf(0);sNr(false);sSc("play");SFX.startMusic();
   };
 
   useEffect(()=>{
@@ -200,7 +239,7 @@ function Game() {
         const o=s.obs[i],oc=o.x+20,ot=GY+20;
         if(Math.abs(cx-oc)<30&&cb>ot-10){
           s.obs.splice(i,1);s.sc=Math.max(0,s.sc-1);s.wt=25;
-          sW(true);sWf(0);sSco(s.sc);
+          sW(true);sWf(0);sSco(s.sc);SFX.hit();
           sHb(p=>[...p.slice(-3),{id:Math.random(),x:oc,y:ot+60}]);
         }
       }
@@ -208,7 +247,7 @@ function Game() {
         const o=s.stars[i];
         if(Math.abs(cx-o.x)<35&&Math.abs(s.y+10-o.y)<40){
           s.sc++;sB(p=>[...p.slice(-5),{id:Math.random(),x:o.x,y:o.y}]);
-          s.stars.splice(i,1);sSco(s.sc);
+          s.stars.splice(i,1);sSco(s.sc);SFX.collect();
         }
       }
       sT(t=>t+1); if(wob) sWf(f=>f+1);
@@ -260,7 +299,7 @@ function Game() {
   return <div onClick={jump} onTouchStart={(e)=>{e.preventDefault();jump();}} style={{width:"100%",height:"100%",background:BGC[s.bi],position:"relative",overflow:"hidden",cursor:"pointer"}}>
     <div style={{position:"absolute",top:12,left:0,right:0,textAlign:"center",fontSize:24,fontWeight:"bold",color:tCol,zIndex:10,textShadow:"1px 1px 0 #fff",transform:tl<=10?`scale(${1+Math.sin(Date.now()*0.01)*0.08})`:"none"}}>⏱ {tl}s</div>
     <div style={{position:"absolute",top:12,right:16,fontSize:24,color:"#FF6B9D",fontWeight:"bold",zIndex:10,textShadow:"1px 1px 0 #fff"}}>⭐ {score}</div>
-    <button onClick={e=>{e.stopPropagation();if(tmr.current)clearInterval(tmr.current);sSc("start");}} style={{position:"absolute",top:12,left:12,background:"rgba(255,255,255,0.7)",border:"none",borderRadius:20,padding:"6px 14px",fontSize:14,cursor:"pointer",zIndex:10}}>← Back</button>
+    <button onClick={e=>{e.stopPropagation();if(tmr.current)clearInterval(tmr.current);SFX.stopMusic();sSc("start");}} style={{position:"absolute",top:12,left:12,background:"rgba(255,255,255,0.7)",border:"none",borderRadius:20,padding:"6px 14px",fontSize:14,cursor:"pointer",zIndex:10}}>← Back</button>
 
     {s.cl.map((c,i)=><div key={i} style={{position:"absolute",transform:`translate3d(${c.x}px,${c.y}px,0)`,fontSize:c.sz,opacity:0.6,pointerEvents:"none",willChange:"transform"}}>☁️</div>)}
     {s.hl.map((h,i)=><div key={i} style={{position:"absolute",bottom:0,transform:`translate3d(${h.x}px,0,0)`,width:h.w,height:h.h,borderRadius:"50% 50% 0 0",background:h.c,pointerEvents:"none",willChange:"transform"}} />)}
