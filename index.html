@@ -48,16 +48,16 @@ const store = {
 function Burst({x,y}) {
   const [ps] = useState(()=>Array.from({length:8},(_,i)=>({id:i,e:BE[Math.floor(Math.random()*BE.length)],a:(i/8)*Math.PI*2,s:2+Math.random()*3})));
   const [f,sF] = useState(0);
-  useEffect(()=>{const id=setInterval(()=>sF(v=>v+1),30);return()=>clearInterval(id);},[]);
+  useEffect(()=>{let id;const tick=()=>{sF(v=>v+1);id=requestAnimationFrame(tick);};id=requestAnimationFrame(tick);return()=>cancelAnimationFrame(id);},[]);
   if(f>20) return null;
-  return <>{ps.map(p=>{const px=x+Math.cos(p.a)*p.s*f,py=y+Math.sin(p.a)*p.s*f-f*0.5;return <div key={p.id} style={{position:"absolute",left:px,top:py,fontSize:18,opacity:1-f/20,pointerEvents:"none",transform:`rotate(${f*10}deg)`}}>{p.e}</div>})}</>;
+  return <>{ps.map(p=>{const px=x+Math.cos(p.a)*p.s*f,py=y+Math.sin(p.a)*p.s*f-f*0.5;return <div key={p.id} style={{position:"absolute",transform:`translate3d(${px}px,${py}px,0) rotate(${f*10}deg)`,fontSize:18,opacity:1-f/20,pointerEvents:"none",willChange:"transform,opacity"}}>{p.e}</div>})}</>;
 }
 
 function HitBurst({x,y}) {
   const [f,sF] = useState(0);
-  useEffect(()=>{const id=setInterval(()=>sF(v=>v+1),30);return()=>clearInterval(id);},[]);
+  useEffect(()=>{let id;const tick=()=>{sF(v=>v+1);id=requestAnimationFrame(tick);};id=requestAnimationFrame(tick);return()=>cancelAnimationFrame(id);},[]);
   if(f>15) return null;
-  return <div style={{position:"absolute",left:x-20,top:y-20,fontSize:40,opacity:1-f/15,pointerEvents:"none",transform:`scale(${1+f*0.15})`}}>💥</div>;
+  return <div style={{position:"absolute",transform:`translate3d(${x-20}px,${y-20}px,0) scale(${1+f*0.15})`,fontSize:40,opacity:1-f/15,pointerEvents:"none",willChange:"transform,opacity"}}>💥</div>;
 }
 
 function Face({size,photo,fs}) {
@@ -69,7 +69,7 @@ function Face({size,photo,fs}) {
 function Char({y,frame:f,onGround:og,wobble:w,wobbleFrame:wf,photo}) {
   const lA=og?Math.sin(f*0.3)*20:-15, aA=og?Math.sin(f*0.3+1)*25:-30;
   const wR=w?Math.sin(wf*0.8)*25:0, wS=w?1+Math.sin(wf*1.2)*0.1:1, wC=w?`hue-rotate(${wf*20}deg)`:"none";
-  return <div style={{position:"absolute",left:55,top:y-25+80,width:70,height:110,transform:`rotate(${wR}deg) scale(${wS})`,filter:wC,transition:w?"none":"transform 0.1s"}}>
+  return <div style={{position:"absolute",transform:`translate3d(55px,${y-25+80}px,0) rotate(${wR}deg) scale(${wS})`,width:70,height:110,filter:wC,transition:w?"none":"transform 0.1s",willChange:"transform"}}>
     <Face size={50} photo={photo} fs={28} />
     <div style={{width:40,height:36,background:"linear-gradient(180deg,#FF6B9D,#FF8E53)",borderRadius:"12px 12px 8px 8px",margin:"-6px auto 0",position:"relative",zIndex:2,boxShadow:"0 2px 6px rgba(0,0,0,0.1)",display:"flex",alignItems:"center",justifyContent:"center"}}><span style={{fontSize:14,marginTop:2}}>⭐</span></div>
     <div style={{position:"absolute",left:2,top:52,width:16,height:7,background:"#FFB347",borderRadius:5,transformOrigin:"right center",transform:`rotate(${aA}deg)`,zIndex:1}} />
@@ -81,7 +81,7 @@ function Char({y,frame:f,onGround:og,wobble:w,wobbleFrame:wf,photo}) {
 
 function StartChar({photo}) {
   const [f,sF] = useState(0);
-  useEffect(()=>{const id=setInterval(()=>sF(v=>v+1),50);return()=>clearInterval(id);},[]);
+  useEffect(()=>{let id;const tick=()=>{sF(v=>v+1);id=requestAnimationFrame(tick);};id=requestAnimationFrame(tick);return()=>cancelAnimationFrame(id);},[]);
   const b=Math.sin(f*0.15)*8, lA=Math.sin(f*0.2)*15, aA=Math.sin(f*0.2+1)*20;
   return <div style={{width:100,height:160,position:"relative",transform:`translateY(${b}px)`,margin:"0 auto 16px"}}>
     <Face size={72} photo={photo} fs={40} />
@@ -262,14 +262,14 @@ function Game() {
     <div style={{position:"absolute",top:12,right:16,fontSize:24,color:"#FF6B9D",fontWeight:"bold",zIndex:10,textShadow:"1px 1px 0 #fff"}}>⭐ {score}</div>
     <button onClick={e=>{e.stopPropagation();if(tmr.current)clearInterval(tmr.current);sSc("start");}} style={{position:"absolute",top:12,left:12,background:"rgba(255,255,255,0.7)",border:"none",borderRadius:20,padding:"6px 14px",fontSize:14,cursor:"pointer",zIndex:10}}>← Back</button>
 
-    {s.cl.map((c,i)=><div key={i} style={{position:"absolute",left:c.x,top:c.y,fontSize:c.sz,opacity:0.6,pointerEvents:"none"}}>☁️</div>)}
-    {s.hl.map((h,i)=><div key={i} style={{position:"absolute",left:h.x,bottom:0,width:h.w,height:h.h,borderRadius:"50% 50% 0 0",background:h.c,pointerEvents:"none"}} />)}
+    {s.cl.map((c,i)=><div key={i} style={{position:"absolute",transform:`translate3d(${c.x}px,${c.y}px,0)`,fontSize:c.sz,opacity:0.6,pointerEvents:"none",willChange:"transform"}}>☁️</div>)}
+    {s.hl.map((h,i)=><div key={i} style={{position:"absolute",bottom:0,transform:`translate3d(${h.x}px,0,0)`,width:h.w,height:h.h,borderRadius:"50% 50% 0 0",background:h.c,pointerEvents:"none",willChange:"transform"}} />)}
     <div style={{position:"absolute",bottom:0,left:0,right:0,height:"30%",background:"linear-gradient(180deg,#7CFC00,#228B22)",borderTop:"3px solid #32CD32"}}>
-      {Array.from({length:20},(_,i)=><span key={i} style={{position:"absolute",top:-8,left:((i*73+s.f*SS*0.5)%(W+40))-20,fontSize:14,opacity:0.6}}>🌿</span>)}
+      {Array.from({length:20},(_,i)=><span key={i} style={{position:"absolute",top:-8,transform:`translate3d(${((i*73+s.f*SS*0.5)%(W+40))-20}px,0,0)`,fontSize:14,opacity:0.6,willChange:"transform"}}>🌿</span>)}
     </div>
 
-    {s.obs.map(o=>{const bob=Math.sin(s.f*0.08+o.bo)*6;return <div key={o.id} style={{position:"absolute",left:o.x,top:GY+15+80+bob,fontSize:42,filter:"drop-shadow(0 2px 4px rgba(0,0,0,0.3))",transform:`scaleX(${s.f%60<30?1:-1})`,transition:"transform 0.3s"}}>{o.e}</div>;})}
-    {s.stars.map(o=><div key={o.id} style={{position:"absolute",left:o.x,top:o.y+80,fontSize:28,transform:`rotate(${Math.sin(s.f*0.1)*15}deg) scale(${1+Math.sin(s.f*0.15)*0.15})`}}>{o.e}</div>)}
+    {s.obs.map(o=>{const bob=Math.sin(s.f*0.08+o.bo)*6;return <div key={o.id} style={{position:"absolute",transform:`translate3d(${o.x}px,${GY+15+80+bob}px,0) scaleX(${s.f%60<30?1:-1})`,fontSize:42,filter:"drop-shadow(0 2px 4px rgba(0,0,0,0.3))",transition:"transform 0.3s",willChange:"transform"}}>{o.e}</div>;})}
+    {s.stars.map(o=><div key={o.id} style={{position:"absolute",transform:`translate3d(${o.x}px,${o.y+80}px,0) rotate(${Math.sin(s.f*0.1)*15}deg) scale(${1+Math.sin(s.f*0.15)*0.15})`,fontSize:28,willChange:"transform"}}>{o.e}</div>)}
 
     <Char y={s.y} frame={s.f} onGround={s.og} wobble={wob} wobbleFrame={wf} photo={photo} />
     {bursts.map(b=><Burst key={b.id} x={b.x} y={b.y+80} />)}
