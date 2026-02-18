@@ -22,7 +22,7 @@
 <script type="text/babel">
 const { useState, useEffect, useRef, useCallback } = React;
 
-const G = 0.6, JF = -11, FF = -7, MJ = 4, GY = 280, SS = 3, SI = 100, SSP = 65, DUR = 60;
+const G = 0.6, JF = -11, FF = -7, MJ = 4, SS = 3, SI = 100, SSP = 65, DUR = 60;
 const OBS = ["👻","🐉","👾","🦇","💀","🎃","👹","🐲"];
 const COL = ["⭐","🌟","💎","🦋","🍭","🌈"];
 const BE = ["✨","🎉","💫","🌟","❤️","🎊","🥳","💖"];
@@ -129,13 +129,15 @@ function Game() {
   const [fm,sFm] = useState("");
   const [,sT] = useState(0);
 
+  const W = window.innerWidth, H = window.innerHeight, cX = 80;
+  const GY = Math.floor(H * 0.7) - 168;
+
   const raf = useRef(null), tmr = useRef(null), fr = useRef(null);
   const st = useRef({
     y:GY,vy:0,og:true,jc:0,obs:[],stars:[],f:0,sc:0,bi:0,wt:0,
     cl:Array.from({length:5},(_,i)=>({x:i*160+Math.random()*80,y:30+Math.random()*80,sz:30+Math.random()*30,sp:0.3+Math.random()*0.5})),
     hl:[{x:0,w:200,h:80,c:"#90EE90"},{x:180,w:150,h:60,c:"#98FB98"},{x:350,w:250,h:90,c:"#7CFC00"},{x:550,w:180,h:70,c:"#90EE90"}],
   });
-  const W = window.innerWidth, H = window.innerHeight, cX = 80;
 
   useEffect(()=>{
     const p = store.get("superme-photo"); if(p) sP(p);
